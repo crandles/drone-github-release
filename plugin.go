@@ -40,9 +40,9 @@ func (p Plugin) Exec() error {
 		files []string
 	)
 
-	if p.Build.Event != "tag" {
-		return fmt.Errorf("The SVN Release plugin is only available for tags")
-	}
+	// if p.Build.Event != "tag" {
+	// 	return fmt.Errorf("The SVN Release plugin is only available for tags")
+	// }
 
 	if p.Config.User == "" {
 		return fmt.Errorf("You must provide a User")
