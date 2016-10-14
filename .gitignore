@@ -24,4 +24,4 @@ _testmain.go
 *.prof
 
 coverage.out
-drone-github-release
+drone-svn-release

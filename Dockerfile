@@ -1,14 +1,7 @@
-# Docker image for the Drone GitHub Release plugin
-#
-#     cd $GOPATH/src/github.com/drone-plugins/drone-github-release
-#     make deps build docker
+FROM alpine:latest
 
-FROM alpine:3.3
+RUN apk add --update subversion curl && rm -rf /var/cache/apk/*
 
-RUN apk update && \
-  apk add \
-    ca-certificates && \
-  rm -rf /var/cache/apk/*
+ADD drone-svn-release /bin/
 
-ADD drone-github-release /bin/
-ENTRYPOINT ["/bin/drone-github-release"]
+ENTRYPOINT ["/bin/drone-svn-release"]

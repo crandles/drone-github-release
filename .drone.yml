@@ -10,17 +10,17 @@ pipeline:
       - make test
   docker:
     storage_driver: overlay
-    repo: plugins/drone-github-release
+    repo: crandles/drone-svn-release
     tag: [ "latest" ]
     when:
       branch: release/0.4
       event: push
 
 plugin:
-  name: GitHub Release
-  desc: Publish files and artifacts to GitHub Releases
+  name: SVN Release
+  desc: Publish files and artifacts to SVN
   type: publish
-  image: plugins/drone-github-release
+  image: crandles/svn-release
   labels:
-    - github
+    - svn
     - release
