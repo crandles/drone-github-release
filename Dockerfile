@@ -1,8 +1,7 @@
-FROM cdrx/fpm-centos:7
+FROM alpine:latest
 
-RUN yum install -y svn git
+RUN apk add --update subversion curl openssl-dev
 
 ADD drone-svn-release /bin/
-ADD *.sh /bin/
 
 ENTRYPOINT ["/bin/drone-svn-release"]
