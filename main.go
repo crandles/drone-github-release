@@ -64,11 +64,10 @@ func execute(cmd *exec.Cmd) error {
 }
 
 func release(user string, password string, url string, files []string) error {
-	makeDir := exec.Command("svn", "co", "--no-auth-cache", "--username", user, "--password", password, "--depth", "empty", "--trust-server-cert", "--non-interactive", url, "svn-base-dir")
+	makeDir := exec.Command("make_svn_dir.sh", user, password, url, "svn-base-dir")
 	if err := execute(makeDir); err != nil {
 		return err
 	}
-	fmt.Println("directory created.")
 
 	for _, file := range files {
 		stage := exec.Command("cp", file, "svn-base-dir/")
@@ -77,17 +76,9 @@ func release(user string, password string, url string, files []string) error {
 		}
 	}
 
-	if err := os.Chdir("svn-base-dir/"); err != nil {
-		return fmt.Errorf("Failed to cd to svn directory: %s", err)
-	}
-
-	if err := execute(exec.Command("svn", "add", "*")); err != nil {
-		return fmt.Errorf("Failed to add artifacts: %s", err)
-	}
-
-	if err := execute(exec.Command("svn", "ci", "--no-auth-cache", "--username", user, "--password", password, "--trust-server-cert", "--non-interactive", "-m", "$HOSTNAME: $DRONE_REPO-$DRONE_COMMIT: $DRONE_BUILD_NUMBER", "*")); err != nil {
+	push := exec.Command("push.sh", user, password, "svn-base-dir/")
+	if err := execute(push); err != nil {
 		return fmt.Errorf("Failed to stage artifacts: %s", err)
 	}
-
 	return nil
 }
