@@ -15,7 +15,7 @@ var (
 )
 
 func main() {
-	fmt.Printf("Drone GitHub Release Plugin built from %s\n", buildCommit)
+	fmt.Printf("Drone SVN Release Plugin built from %s\n", buildCommit)
 
 	workspace := drone.Workspace{}
 	repo := drone.Repo{}
@@ -28,10 +28,10 @@ func main() {
 	plugin.Param("vargs", &vargs)
 	plugin.MustParse()
 
-	// if build.Event != "tag" {
-	// 	fmt.Printf("The GitHub Release plugin is only available for tags\n")
-	// 	os.Exit(0)
-	// }
+	if build.Event != "tag" {
+		fmt.Printf("The SVN Release plugin is only available for tags\n")
+		os.Exit(0)
+	}
 
 	if workspace.Path != "" {
 		os.Chdir(workspace.Path)
@@ -48,40 +48,6 @@ func main() {
 			files = append(files, globed...)
 		}
 	}
-
-	// baseURL, err := url.Parse(vargs.BaseURL)
-	// if err != nil {
-	// 	fmt.Printf("Failed to parse base URL\n")
-	// 	os.Exit(1)
-	// }
-	//
-	// uploadURL, err := url.Parse(vargs.UploadURL)
-	// if err != nil {
-	// 	fmt.Printf("Failed to parse upload URL\n")
-	// 	os.Exit(1)
-	// }
-
-	// ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: vargs.APIKey})
-	// tc := oauth2.NewClient(oauth2.NoContext, ts)
-	//
-	// client := github.NewClient(tc)
-	// client.BaseURL = baseURL
-	// client.UploadURL = uploadURL
-	//
-	// rc := releaseClient{
-	// 	Client: client,
-	// 	Owner:  repo.Owner,
-	// 	Repo:   repo.Name,
-	// 	Tag:    filepath.Base(build.Ref),
-	// 	Draft:  vargs.Draft,
-	// 	FileExists: vargs.FileExists,
-	// }
-	//
-	// release, err := rc.buildRelease()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
 
 	if err := release(vargs.User, vargs.Password, vargs.BaseURL, files); err != nil {
 		fmt.Println(err)
