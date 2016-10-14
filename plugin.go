@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 )
@@ -66,41 +67,6 @@ func (p Plugin) Exec() error {
 		}
 	}
 
-	// if len(p.Config.Checksum) > 0 {
-	// 	var (
-	// 		err error
-	// 	)
-	//
-	// 	files, err = writeChecksums(files, p.Config.Checksum)
-	//
-	// 	if err != nil {
-	// 		return fmt.Errorf("Failed to write checksums. %s", err)
-	// 	}
-	// }
-
-	// baseURL, err := url.Parse(p.Config.BaseURL)
-	//
-	// if err != nil {
-	// 	return fmt.Errorf("Failed to parse base URL. %s", err)
-	// }
-
-	// rc := releaseClient{
-	// 	User:     p.Config.User,
-	// 	Password: p.Config.Password,
-	// 	BaseURL:  p.Config.BaseURL,
-	//
-	// 	Owner: p.Repo.Owner,
-	// 	Repo:  p.Repo.Name,
-	// 	Tag:   filepath.Base(p.Commit.Ref),
-	// 	Draft: p.Config.Draft,
-	// }
-	//
-	// release, err := rc.buildRelease()
-	// if err != nil {
-	// 	return fmt.Errorf("Failed to create the release. %s", err)
-	// }
-
-	// if err := rc.uploadFiles(*release.ID, files); err != nil {
 	if err := release(p.Config.User, p.Config.Password, p.Config.BaseURL, p.Config.Files); err != nil {
 		return fmt.Errorf("Failed to upload the files. %s", err)
 	}
@@ -109,14 +75,11 @@ func (p Plugin) Exec() error {
 }
 
 func release(user string, password string, url string, files []string) error {
-	// bash -c 'svn co --username $$ATLAS_USER --password "$$ATLAS_PASSWORD" --depth empty --trust-server-cert --non-interactive "https://atlas.sys.comcast.net/iss/iss/x86_64/7/global" atlas'
-	// @mv *.rpm atlas
-	// bash -c 'cd atlas && svn add *.rpm && svn ci --trust-server-cert --non-interactive --username $$ATLAS_USER --password "$$ATLAS_PASSWORD" -m "drone-ho-b01.dna.comcast.net: sampleproject: $$BUILD_NUMBER" *.rpm'
-
-	makeDir := exec.Command("make_svn_dir.sh", user, password, url, "svn-base-dir")
+	makeDir := exec.Command("svn", "co", "--no-auth-cache", "--username", user, "--password", password, "--depth", "empty", "--trust-server-cert", "--non-interactive", url, "svn-base-dir")
 	if err := execute(makeDir); err != nil {
 		return err
 	}
+	fmt.Println("directory created.")
 
 	for _, file := range files {
 		stage := exec.Command("cp", file, "svn-base-dir/")
@@ -125,9 +88,17 @@ func release(user string, password string, url string, files []string) error {
 		}
 	}
 
-	push := exec.Command("push.sh", user, password, "svn-base-dir/")
-	if err := execute(push); err != nil {
+	if err := os.Chdir("svn-base-dir/"); err != nil {
+		return fmt.Errorf("Failed to cd to svn directory: %s", err)
+	}
+
+	if err := execute(exec.Command("svn", "add", "*")); err != nil {
+		return fmt.Errorf("Failed to add artifacts: %s", err)
+	}
+
+	if err := execute(exec.Command("svn", "ci", "--no-auth-cache", "--username", user, "--password", password, "--trust-server-cert", "--non-interactive", "-m", "$HOSTNAME: $DRONE_REPO-$DRONE_COMMIT: $DRONE_BUILD_NUMBER", "*")); err != nil {
 		return fmt.Errorf("Failed to stage artifacts: %s", err)
 	}
+
 	return nil
 }
